@@ -36,24 +36,39 @@ const CapitalCard = ({ capital, variant = 'detailed' }) => {
     if (variant === 'compact') {
         return (
             <Link href={`/capitals/${capital.id}`} className="block group">
-                <div className="bg-[var(--card)] border border-[var(--card-border)] p-4 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 ${colors.lightBg} rounded-xl flex items-center justify-center ${colors.iconText}`}>
-                            <Wallet size={24} />
+                <div className="bg-[var(--card)] border border-[var(--card-border)] p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
+                    <div className="bg-[var(--card)] rounded-2xl  transition-all flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center text-white`}>
+                                <Wallet size={24} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold">{capital.name}</h4>
+                                <p className="text-[var(--muted)] text-xs">Available Capital</p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 className="font-bold">{capital.name}</h4>
-                            <p className="text-[var(--muted)] text-xs">Available Capital</p>
+                        <div className="flex items-center gap-3">
+                            <div className="text-right">
+                                <p className="font-bold text-lg">
+                                    <span className="text-xs opacity-60 mr-0.5">{settings.currency}</span>
+                                    {balance.toLocaleString()}
+                                </p>
+                            </div>
+                            <ChevronRight size={18} className={`text-neutral-300 ${colors.border} transition-colors`} />
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="text-right">
-                            <p className="font-bold text-lg">
-                                <span className="text-xs opacity-60 mr-0.5">{settings.currency}</span>
-                                {balance.toLocaleString()}
-                            </p>
-                        </div>
-                        <ChevronRight size={18} className={`text-neutral-300 ${colors.border} transition-colors`} />
+
+                    {/* Progress Bar */}
+                    <div className="h-2 w-full bg-[var(--input)] rounded-full mb-3 mt-4  overflow-hidden">
+                        <div
+                            className={`h-full ${colors.bar} transition-all duration-1000 ease-out`}
+                            style={{ width: `${percentage}%` }}
+                        />
+                    </div>
+                    {/* Footer Stats */}
+                    <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--muted)] m-2">
+                        <span>INITIAL: {settings.currency}{initial.toLocaleString()}</span>
+                        <span className={colors.text}>{Math.round(percentage)}% LEFT</span>
                     </div>
                 </div>
             </Link>
@@ -64,10 +79,14 @@ const CapitalCard = ({ capital, variant = 'detailed' }) => {
         <Link href={`/capitals/${capital.id}`} className="block group">
             <div className="bg-[var(--card)] border border-[var(--card-border)] p-6 rounded-[32px] shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
                 {/* Header: Icon & Delete */}
-                <div className="flex justify-between items-start mb-6">
-                    <div className={`w-14 h-14 ${colors.bg} rounded-2xl flex items-center justify-center text-white shadow-lg`}>
-                        <Wallet size={28} />
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex justify-between items-center gap-4">
+                        <div className={`w-12 h-12 ${colors.bg} rounded-[19px] flex items-center justify-center text-white shadow-lg`}>
+                            <Wallet size={27} />
+                        </div>
+                        <h3 className="text-2xl font-bold">{capital.name}</h3>
                     </div>
+                    {/* Content: Name */}
                     <button
                         onClick={handleDelete}
                         className="p-2 text-neutral-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-full transition-colors"
@@ -75,9 +94,6 @@ const CapitalCard = ({ capital, variant = 'detailed' }) => {
                         <Trash2 size={20} />
                     </button>
                 </div>
-
-                {/* Content: Name */}
-                <h3 className="text-2xl font-bold mb-6">{capital.name}</h3>
 
                 {/* Balance Row */}
                 <div className="flex justify-between items-end mb-3">

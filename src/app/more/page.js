@@ -3,6 +3,8 @@
 import React from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
 import { useFeedback } from '@/context/FeedbackContext';
+import { useRouter } from 'next/navigation';
+import { generateDummyData } from '@/utils/dummyData';
 import {
     Settings,
     Download,
@@ -16,16 +18,29 @@ import {
     User as UserIcon,
     Mail,
     Calendar,
-    ShieldCheck
+    ShieldCheck,
+    History,
+    FileDown,
+    FileBracesCorner,
+    ChevronLeft
 } from 'lucide-react';
 
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import ThemeToggle from '@/components/ThemeToggle';
+
+
 export default function ProfilePage() {
-    const { settings, setSettings, resetApp, capitals, sources, expenses, transactions, getTotalBalance, getCapitalBalance } = useExpenses();
+    const router = useRouter();
+    const { settings, setSettings, resetApp, capitals, sources, expenses, transactions, loadDummyData, getTotalBalance, getCapitalBalance } = useExpenses();
     const { toast, confirm } = useFeedback();
 
     const totalNetValue = getTotalBalance();
 
-    const handleExportData = () => {
+    // console.log(Object.entries(settings)); 
+
+
+    const handleExportJson = () => {
         const data = {
             capitals,
             sources,
@@ -43,27 +58,99 @@ export default function ProfilePage() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        toast('Data exported successfully!', 'success');
+        toast('JSON downloaded successfully!', 'success');
+    };
+
+    const handleExportPdf = () => {
+        const doc = new jsPDF();
+        let y = 15;
+
+        doc.setFontSize(16);
+        doc.text('Expense Tracker Report', 14, y);
+        y += 8;
+
+        doc.setFontSize(10);
+        doc.text(`Exported on: ${new Date().toLocaleString()}`, 14, y);
+        y += 10;
+
+        const addTable = (title, data) => {
+            if (!Array.isArray(data) || data.length === 0) return;
+
+            doc.setFontSize(12);
+            doc.text(title, 14, y);
+            y += 4;
+
+            autoTable(doc, {
+                startY: y,
+                head: [Object.keys(data[0])],
+                body: data.map(row => Object.values(row)),
+                styles: { fontSize: 8 },
+                theme: 'grid'
+            });
+
+            y = doc.lastAutoTable.finalY + 8;
+        };
+
+        addTable('Capitals', capitals);
+        addTable('Sources', sources);
+        addTable('Expenses', expenses);
+        addTable('Transactions', transactions);
+
+        // Settings table
+        doc.setFontSize(12);
+        doc.text('Settings', 14, y);
+        y += 4;
+
+        autoTable(doc, {
+            startY: y,
+            head: [['Key', 'Value']],
+            body: Object.entries(settings),
+            styles: { fontSize: 9 },
+            theme: 'grid'
+        });
+
+        doc.save(`expense_tracker_${new Date().toISOString().split('T')[0]}.pdf`);
+
+        toast('PDF downloaded successfully!', 'success');
+    };
+
+
+
+    const handleInitDummyData = () => {
+        const dummyData = generateDummyData();
+        loadDummyData(dummyData);
+        toast('Sample notebook data loaded!', 'info');
     };
 
     const currencies = [
-        { label: 'INR (₹)', value: '₹' },
         { label: 'USD ($)', value: '$' },
-        { label: 'BDT (৳)', value: '৳' },
+        { label: 'INR (₹)', value: '₹' },
         { label: 'EUR (€)', value: '€' },
         { label: 'GBP (£)', value: '£' },
+        { label: 'BDT (৳)', value: '৳' },
     ];
 
     return (
-        <div className="space-y-6 page-transition pb-20">
-            <header>
-                <h1 className="text-3xl font-bold tracking-tight">Profile & Settings</h1>
-                <p className="text-[var(--muted)] text-sm">Personal details and preferences</p>
+        <div className="space-y-4 page-transition pb-20">
+            <header className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-2 hover:bg-[var(--input)] rounded-full transition-colors"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">More Option</h1>
+                        <p className="text-[var(--muted)] text-sm">Profile and Settings</p>
+                    </div>
+                </div>
+                <ThemeToggle />
             </header>
 
             {/* Premium Profile Card */}
-            <div className="bg-[var(--card)] border border-[var(--card-border)] p-8 rounded-[40px] shadow-sm flex flex-col items-center text-center transition-all duration-300">
-                <div className="relative mb-6">
+            <div className="bg-[var(--card)] border border-[var(--card-border)] p-2 rounded-[25px] shadow-sm flex flex-col items-center text-center transition-all duration-300">
+                <div className="relative mb-3">
                     <div className="w-24 h-24 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600">
                         <UserIcon size={48} />
                     </div>
@@ -74,7 +161,7 @@ export default function ProfilePage() {
 
                 <h2 className="text-2xl font-bold mb-2">User</h2>
 
-                <div className="space-y-2 mb-6">
+                <div className="space-y-2 mb-1">
                     <div className="flex items-center justify-center gap-2 text-[var(--muted)] text-sm">
                         <Mail size={14} />
                         <span>user@example.com</span>
@@ -85,16 +172,16 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
-                <div className="bg-indigo-50 dark:bg-indigo-900/20 px-4 py-1.5 rounded-full">
+                {/* <div className="bg-indigo-50 dark:bg-indigo-900/20 px-4 py-1.5 rounded-full">
                     <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
                         TIER: PREMIUM USER
                     </span>
-                </div>
+                </div> */}
             </div>
 
             {/* Asset Portfolio Section */}
-            <div className="bg-[var(--card)] border border-[var(--card-border)] rounded-[40px] overflow-hidden transition-all duration-300">
-                <div className="p-6 pb-4 flex justify-between items-center">
+            <div className="bg-[var(--card)] border border-[var(--card-border)] rounded-[25px] overflow-hidden transition-all duration-300">
+                <div className="p-6 pb-3 flex justify-between items-center">
                     <h3 className="font-bold text-lg">Asset Portfolio</h3>
                     <span className="bg-[var(--input)] text-[var(--muted)] px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
                         Live Balances
@@ -113,7 +200,7 @@ export default function ProfilePage() {
                             violet: 'bg-violet-500',
                         };
                         return (
-                            <div key={capital.id} className="p-4 px-6 flex justify-between items-center group hover:bg-[var(--input)] transition-colors">
+                            <div key={capital.id} className="p-3 px-6 flex justify-between items-center group hover:bg-[var(--input)] transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-2 h-2 rounded-full ${colorMap[capital.color] || colorMap.blue}`} />
                                     <span className="font-semibold text-sm">{capital.name}</span>
@@ -127,7 +214,7 @@ export default function ProfilePage() {
                     })}
                 </div>
 
-                <div className="p-6 pt-4 border-t border-[var(--border)] flex justify-between items-center">
+                <div className="p-5 pt-2 border-t border-[var(--border)] flex justify-between items-center">
                     <span className="text-[var(--muted)] font-bold text-sm">Total Net Value</span>
                     <span className="text-indigo-600 dark:text-indigo-400 font-black text-xl">
                         <span className="text-sm mr-1">{settings.currency}</span>
@@ -136,7 +223,7 @@ export default function ProfilePage() {
                 </div>
             </div>
 
-            {/* Settings Sections */}
+            {/* Preference Settings Sections */}
             <div className="space-y-4">
                 {/* Appearance & Currency */}
                 <section>
@@ -169,10 +256,10 @@ export default function ProfilePage() {
                             <select
                                 value={settings.currency}
                                 onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
-                                className="bg-transparent font-bold text-blue-600 outline-none text-sm"
+                                className=" font-bold text-blue-600 outline-none text-sm "
                             >
                                 {currencies.map(c => (
-                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                    <option key={c.value} value={c.value} className='text-black' >{c.label}</option>
                                 ))}
                             </select>
                         </div>
@@ -180,21 +267,48 @@ export default function ProfilePage() {
                 </section>
 
                 {/* Data Management */}
+                {/* Storage & Backup Section */}
                 <section>
                     <h3 className="text-xs font-bold uppercase tracking-widest mb-3 px-2 opacity-70">Storage & Backup</h3>
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-3xl overflow-hidden transition-colors duration-300">
                         <button
-                            onClick={handleExportData}
+                            onClick={handleExportPdf}
                             className="w-full p-4 flex items-center justify-between border-b border-[var(--border)] hover:bg-[var(--input)] transition-colors"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg flex items-center justify-center">
-                                    <Download size={18} />
+                                    {/* <Download size={18} /> */}
+                                    <FileDown size={18} />
                                 </div>
-                                <span className="font-semibold text-sm">Backup Data (JSON)</span>
+                                <span className="font-semibold text-sm">Download Data (PDF)</span>
                             </div>
                             <ChevronRight size={16} className="text-neutral-300" />
                         </button>
+                        <button
+                            onClick={handleExportJson}
+                            className="w-full p-4 flex items-center justify-between border-b border-[var(--border)] hover:bg-[var(--input)] transition-colors"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg flex items-center justify-center">
+                                    <FileBracesCorner size={18} />
+                                </div>
+                                <span className="font-semibold text-sm">Download Data (JSON)</span>
+                            </div>
+                            <ChevronRight size={16} className="text-neutral-300" />
+                        </button>
+                        <button
+                            onClick={handleInitDummyData}
+                            className="w-full p-4 flex items-center justify-between border-b border-[var(--border)] hover:bg-[var(--input)] transition-colors"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg flex items-center justify-center">
+                                    <History size={20} />
+                                </div>
+                                <span className="font-semibold text-sm">Load Sample Data</span>
+                            </div>
+                            <ChevronRight size={16} className="text-neutral-300" />
+                        </button>
+
                         <button
                             onClick={async () => {
                                 const ok = await confirm('Reset Everything?', 'This will wipe all your data permanently. This cannot be undone.');

@@ -18,8 +18,8 @@ const BottomNav = () => {
         { label: 'Dashboard', icon: Home, path: '/' },
         { label: 'Capitals', icon: Wallet, path: '/capitals' },
         { label: 'History', icon: List, path: '/transactions' },
-        { label: 'Expenses', icon: TrendingDown, path: '/expenses' },
-        { label: 'Profile', icon: User, path: '/profile' },
+        { label: 'Spends', icon: TrendingDown, path: '/expenses' },
+        { label: 'More', icon: User, path: '/more' },
     ];
 
     return (

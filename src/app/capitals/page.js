@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
-import { Plus, X, Wallet as WalletIcon } from 'lucide-react';
+import { Plus, X, Wallet as WalletIcon, ChevronLeft } from 'lucide-react';
 import CapitalCard from '@/components/CapitalCard';
 import Modal from '@/components/Modal';
+import { useRouter } from 'next/navigation';
 
 export default function CapitalsPage() {
+    const router = useRouter();
     const { capitals, addCapital } = useExpenses();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newCapitalName, setNewCapitalName] = useState('');
@@ -33,9 +35,17 @@ export default function CapitalsPage() {
     return (
         <div className="space-y-6 page-transition">
             <header className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold">Capitals</h1>
-                    <p className="text-[var(--muted)] text-sm">Manage your money containers</p>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-2 hover:bg-[var(--input)] rounded-full transition-colors"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold">Capitals</h1>
+                        <p className="text-[var(--muted)] text-sm">Manage your money containers</p>
+                    </div>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
@@ -92,11 +102,11 @@ export default function CapitalsPage() {
                     <button
                         type="submit"
                         className={`w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 ${selectedColor === 'blue' ? 'bg-blue-600 shadow-blue-500/30' :
-                                selectedColor === 'emerald' ? 'bg-emerald-600 shadow-emerald-500/30' :
-                                    selectedColor === 'rose' ? 'bg-rose-600 shadow-rose-500/30' :
-                                        selectedColor === 'amber' ? 'bg-amber-600 shadow-amber-500/30' :
-                                            selectedColor === 'indigo' ? 'bg-indigo-600 shadow-indigo-500/30' :
-                                                'bg-violet-600 shadow-violet-500/30'
+                            selectedColor === 'emerald' ? 'bg-emerald-600 shadow-emerald-500/30' :
+                                selectedColor === 'rose' ? 'bg-rose-600 shadow-rose-500/30' :
+                                    selectedColor === 'amber' ? 'bg-amber-600 shadow-amber-500/30' :
+                                        selectedColor === 'indigo' ? 'bg-indigo-600 shadow-indigo-500/30' :
+                                            'bg-violet-600 shadow-violet-500/30'
                             }`}
                     >
                         Create Capital

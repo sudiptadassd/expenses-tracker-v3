@@ -2,10 +2,13 @@
 
 import React, { useState } from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
-import { Search, Filter, TrendingDown, Trash2 } from 'lucide-react';
+import { Search, Filter, TrendingDown, Trash2, ChevronLeft } from 'lucide-react';
 import ExpenseCard from '@/components/ExpenseCard';
+import ThemeToggle from '@/components/ThemeToggle';
+import { useRouter } from 'next/navigation';
 
 export default function ExpensesPage() {
+    const router = useRouter();
     const { expenses, capitals, deleteExpense, settings } = useExpenses();
     const [filterCapital, setFilterCapital] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -20,9 +23,20 @@ export default function ExpensesPage() {
 
     return (
         <div className="space-y-6 page-transition pb-20">
-            <header>
-                <h1 className="text-2xl font-bold">Expenses</h1>
-                <p className="text-[var(--muted)] text-sm">All debits across all capitals</p>
+            <header className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-2 hover:bg-[var(--input)] rounded-full transition-colors"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold">Expenses</h1>
+                        <p className="text-[var(--muted)] text-sm">All debits across all capitals</p>
+                    </div>
+                </div>
+                <ThemeToggle />
             </header>
 
             {/* Summary Mini Card */}

@@ -10,11 +10,11 @@ const ExpenseCard = ({ expense }) => {
     const { confirm, toast } = useFeedback();
     const capital = capitals.find(c => c.id === expense.capitalId);
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            day: 'numeric',
-            shortMonth: 'short'
+    const formatDate = (isoString) => {
+        return new Date(isoString).toLocaleDateString('en-US', {
+            day: '2-digit',
+            month: 'short',
+            year: '2-digit'
         });
     };
 
@@ -30,6 +30,7 @@ const ExpenseCard = ({ expense }) => {
                         <span className="text-[10px] text-neutral-400 flex items-center gap-1">
                             <Clock size={10} />
                             {formatDate(expense.date)}
+                            {/* {expense.date} */}
                         </span>
                     </div>
                 </div>
@@ -37,7 +38,7 @@ const ExpenseCard = ({ expense }) => {
                     <p className="font-bold text-rose-500 leading-none mb-1">
                         -{settings.currency}{expense.amount.toLocaleString()}
                     </p>
-                    <button
+                    {/* <button
                         onClick={async () => {
                             const ok = await confirm('Delete Expense?', 'This will permanently remove this expense and recover the capital balance.');
                             if (ok) {
@@ -48,7 +49,7 @@ const ExpenseCard = ({ expense }) => {
                         className="p-1.5 text-neutral-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
                     >
                         <Trash2 size={14} />
-                    </button>
+                    </button> */}
                 </div>
             </div>
 

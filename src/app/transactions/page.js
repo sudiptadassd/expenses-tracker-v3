@@ -2,16 +2,13 @@
 
 import React, { useState } from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
-import {
-    Filter,
-    ArrowUpCircle,
-    ArrowDownCircle,
-    Search,
-    BookOpen
-} from 'lucide-react';
+import { BookOpen, ChevronLeft } from 'lucide-react';
 import TransactionCard from '@/components/TransactionCard';
+import ThemeToggle from '@/components/ThemeToggle';
+import { useRouter } from 'next/navigation';
 
 export default function TransactionsPage() {
+    const router = useRouter();
     const { transactions, capitals } = useExpenses();
     const [filterType, setFilterType] = useState('ALL');
     const [filterCapital, setFilterCapital] = useState('all');
@@ -24,9 +21,20 @@ export default function TransactionsPage() {
 
     return (
         <div className="space-y-6 page-transition pb-20">
-            <header>
-                <h1 className="text-2xl font-bold">Ledger History</h1>
-                <p className="text-[var(--muted)] text-sm">Full audit trail of all transactions</p>
+            <header className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => router.back()}
+                        className="p-2 hover:bg-[var(--input)] rounded-full transition-colors"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold">Ledger History</h1>
+                        <p className="text-[var(--muted)] text-sm">Trail of all transactions</p>
+                    </div>
+                </div>
+                <ThemeToggle />
             </header>
 
             {/* Filter Tabs */}

@@ -13,11 +13,14 @@ import {
     ArrowUpRight,
     ArrowDownRight,
     List,
-    User
+    User,
+    Moon,
+    Sun
 } from 'lucide-react';
 import Link from 'next/link';
 import CapitalCard from '@/components/CapitalCard';
 import TransactionCard from '@/components/TransactionCard';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Dashboard() {
     const {
@@ -26,12 +29,16 @@ export default function Dashboard() {
         expenses,
         transactions,
         loadDummyData,
-        settings
+        settings,
+        setSettings
     } = useExpenses();
+
     const { toast } = useFeedback();
 
     const totalBalance = getTotalBalance();
-    const today = new Date().toISOString().split('T')[0];
+    // const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
+
 
     const todayExpenses = expenses.filter(e =>
         e.date.startsWith(today)
@@ -43,7 +50,7 @@ export default function Dashboard() {
         new Date(e.date) >= monthStart
     ).reduce((sum, e) => sum + e.amount, 0);
 
-    const recentTransactions = transactions.slice(0, 5);
+    const recentTransactions = transactions.slice(0, 9);
 
     const handleInitDummyData = () => {
         const dummyData = generateDummyData();
@@ -56,16 +63,21 @@ export default function Dashboard() {
             {/* Header */}
             <header className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold">My Wallet</h1>
-                    <p className="text-[var(--muted)] text-sm">Welcome back!</p>
+                    <h1 className="text-4xl font-bold">Morack</h1>
+                    <p className="text-[var(--muted)] text-lg">Welcome back!</p>
                 </div>
-                <button
+                {/* <button
                     onClick={handleInitDummyData}
                     className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-full hover:bg-blue-100 transition-colors"
                     title="Load Notebook Data"
                 >
                     <History size={20} />
-                </button>
+                </button> */}
+
+                {/* Theme Toggle */}
+                <ThemeToggle/>
+
+
             </header>
 
             {/* Total Balance Card */}
@@ -75,7 +87,7 @@ export default function Dashboard() {
                 </div>
                 <div className="relative z-10">
                     <p className="text-blue-100 text-sm font-medium mb-1">Total Balance</p>
-                    <h2 className="text-4xl font-bold mb-6 flex items-baseline gap-1">
+                    <h2 className="text-4xl font-bold mb-6 flex items-baseline gap-1 !text-white">
                         <span className="text-2xl opacity-80">{settings.currency}</span>
                         {totalBalance.toLocaleString()}
                     </h2>
@@ -83,7 +95,7 @@ export default function Dashboard() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3">
                             <div className="flex items-center gap-2 text-blue-100 text-xs mb-1">
-                                <ArrowUpRight size={14} className="text-emerald-400" />
+                                <TrendingDown size={14} className="text-amber-300" />
                                 <span>Today's Spent</span>
                             </div>
                             <p className="font-bold">{settings.currency}{todayExpenses.toLocaleString()}</p>
@@ -100,7 +112,7 @@ export default function Dashboard() {
             </div>
 
             {/* Quick Actions */}
-            <section>
+            {/* <section>
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold text-lg">Quick Actions</h3>
                 </div>
@@ -123,13 +135,13 @@ export default function Dashboard() {
                         </Link>
                     ))}
                 </div>
-            </section>
+            </section> */}
 
             {/* My Capitals */}
             <section>
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold text-lg">My Capitals</h3>
-                    <Link href="/capitals" className="text-blue-500 text-sm font-semibold">See All</Link>
+                    {/* <Link href="/capitals" className="text-blue-500 text-sm font-semibold">See All</Link> */}
                 </div>
                 {capitals.length > 0 ? (
                     <div className="space-y-3">

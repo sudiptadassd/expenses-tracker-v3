@@ -4,9 +4,10 @@ import React from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
 import {
     ArrowUpCircle,
-    ArrowDownCircle,
+    MoveDownLeft,
     ArrowRight,
-    Clock
+    Clock,
+    MoveUpRight
 } from 'lucide-react';
 
 const TransactionCard = ({ transaction }) => {
@@ -15,14 +16,22 @@ const TransactionCard = ({ transaction }) => {
     const capital = capitals.find(c => c.id === transaction.capitalId);
 
     const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            day: 'numeric',
-            shortMonth: 'short',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        const d = new Date(dateString);
+
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = d.toLocaleString('en-US', { month: 'short' });
+        const year = d.getFullYear().toString().slice(-2);
+
+        let hours = d.getHours();
+        const minutes = d.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'pm' : 'am';
+
+        hours = hours % 12 || 12;
+
+        return `${day} ${month} ${year}, ${hours}:${minutes}${ampm}`;
     };
+
+
 
     return (
         <div className="bg-[var(--card)] border border-[var(--border)] p-4 rounded-2xl shadow-sm transition-colors duration-300">
@@ -30,7 +39,7 @@ const TransactionCard = ({ transaction }) => {
                 <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isCredit ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
                         }`}>
-                        {isCredit ? <ArrowUpCircle size={20} /> : <ArrowDownCircle size={20} />}
+                        {isCredit ? <MoveDownLeft size={20} /> : <MoveUpRight size={20} />}
                     </div>
                     <div>
                         <h4 className="font-bold text-sm leading-tight">{transaction.note || (isCredit ? 'Source' : 'Expense')}</h4>
