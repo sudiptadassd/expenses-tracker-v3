@@ -32,6 +32,8 @@ export default function CapitalsPage() {
         setIsModalOpen(false);
     };
 
+    console.log(capitals)
+
     return (
         <div className="space-y-6 page-transition">
             <header className="flex justify-between items-center">
