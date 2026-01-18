@@ -42,6 +42,19 @@ self.addEventListener('fetch', (event) => {
     // Skip next.js specific requests that shouldn't be cached agressively without logic
     if (event.request.url.includes('/_next/static/development')) return;
 
+
+    /* 🚨 MOST IMPORTANT FIX
+   Handle page navigation FIRST */
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request).catch(() => {
+                return caches.match('/');
+            })
+        );
+        return;
+    }
+
+
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             // Cache hit - return response
@@ -64,7 +77,10 @@ self.addEventListener('fetch', (event) => {
 
                 return networkResponse;
             }).catch(() => {
-                // Optional: Return offline fallback page if network fails
+                // Return offline fallback page if network fails for navigation requests
+                if (event.request.mode === 'navigate') {
+                    return caches.match('/');
+                }
             });
         })
     );
