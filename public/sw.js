@@ -2,6 +2,10 @@ const CACHE_NAME = 'expense-tracker-v3';
 
 const PRECACHE_ASSETS = [
     '/',
+    '/capitals',
+    '/transactions',
+    '/expenses',
+    '/more',
     '/globals.css',
     '/manifest.json'
 ];

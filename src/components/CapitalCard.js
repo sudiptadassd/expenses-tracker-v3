@@ -26,7 +26,7 @@ const CapitalCard = ({ capital, variant = 'detailed' }) => {
     const handleDelete = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const ok = await confirm('Delete Capital?', `Are you sure you want to delete "${capital.name}"? This will remove all associated transactions.`);
+        const ok = await confirm('Delete Capital?', `Are you sure you want to delete "${capital.name}"? All transaction history will be preserved.`);
         if (ok) {
             deleteCapital(capital.id);
             toast('Capital deleted successfully', 'success');

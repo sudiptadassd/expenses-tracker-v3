@@ -1,11 +1,16 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 import ConfirmModal from '@/components/ConfirmModal';
 import Toast from '@/components/Toast';
 
 const FeedbackContext = createContext();
+
+/* ✅ Simple ID generator (Date-based) */
+const generateId = () => {
+    return `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+};
 
 export const useFeedback = () => useContext(FeedbackContext);
 
@@ -14,7 +19,7 @@ export const FeedbackProvider = ({ children }) => {
     const [confirmState, setConfirmState] = useState(null);
 
     const toast = useCallback((message, type = 'info', duration = 3000) => {
-        const id = uuidv4();
+        const id = generateId();
         setToasts(prev => [...prev, { id, message, type }]);
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));

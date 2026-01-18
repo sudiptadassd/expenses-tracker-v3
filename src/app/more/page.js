@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
 import { useFeedback } from '@/context/FeedbackContext';
 import { useRouter } from 'next/navigation';
@@ -22,7 +22,9 @@ import {
     History,
     FileDown,
     FileBracesCorner,
-    ChevronLeft
+    ChevronLeft,
+    CloudBackup,
+    ListRestart
 } from 'lucide-react';
 
 import jsPDF from 'jspdf';
@@ -34,13 +36,17 @@ export default function ProfilePage() {
     const router = useRouter();
     const { settings, setSettings, resetApp, capitals, sources, expenses, transactions, loadDummyData, getTotalBalance, getCapitalBalance } = useExpenses();
     const { toast, confirm } = useFeedback();
+    const fileInputRef = useRef(null);
 
     const totalNetValue = getTotalBalance();
 
     // console.log(Object.entries(settings)); 
 
 
-    const handleExportJson = () => {
+    const handleExportJson = async () => {
+        const ok = await confirm('Download Backup?', 'Save a JSON file containing all your capitals, expenses, and transactions?');
+        if (!ok) return;
+
         const data = {
             capitals,
             sources,
@@ -61,7 +67,10 @@ export default function ProfilePage() {
         toast('JSON downloaded successfully!', 'success');
     };
 
-    const handleExportPdf = () => {
+    const handleExportPdf = async () => {
+        const ok = await confirm('Download Report?', 'Generate a PDF report of your financial status?');
+        if (!ok) return;
+
         const doc = new jsPDF();
         let y = 15;
 
@@ -114,12 +123,48 @@ export default function ProfilePage() {
         toast('PDF downloaded successfully!', 'success');
     };
 
+    const handleImportJson = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+
+                // Basic validation
+                if (!data.capitals || !data.expenses || !data.settings) {
+                    throw new Error('Invalid file format');
+                }
+
+                loadDummyData(data); // reuse existing loader
+                toast('Data imported successfully!', 'success');
+            } catch (err) {
+                toast('Invalid JSON file', 'error');
+            }
+        };
+
+        reader.readAsText(file);
+    };
 
 
-    const handleInitDummyData = () => {
+
+
+    const handleInitDummyData = async () => {
+        const ok = await confirm('Load Sample Data?', 'This will add dummy data to your notebook. Useful for testing.');
+        if (!ok) return;
+
         const dummyData = generateDummyData();
         loadDummyData(dummyData);
         toast('Sample notebook data loaded!', 'info');
+    };
+
+    const handleImportClick = async () => {
+        const ok = await confirm('Import Data?', 'This will merge/overwrite your current data with the uploaded file. This cannot be undone. Always backup first.');
+        if (ok && fileInputRef.current) {
+            fileInputRef.current.click();
+        }
     };
 
     const currencies = [
@@ -296,18 +341,43 @@ export default function ProfilePage() {
                             </div>
                             <ChevronRight size={16} className="text-neutral-300" />
                         </button>
+
                         <button
                             onClick={handleInitDummyData}
                             className="w-full p-4 flex items-center justify-between border-b border-[var(--border)] hover:bg-[var(--input)] transition-colors"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg flex items-center justify-center">
-                                    <History size={20} />
+                                    <ListRestart size={20} />
                                 </div>
                                 <span className="font-semibold text-sm">Load Sample Data</span>
                             </div>
                             <ChevronRight size={16} className="text-neutral-300" />
                         </button>
+
+                        <div>
+                            <input
+                                type="file"
+                                accept=".json"
+                                onChange={handleImportJson}
+                                className="hidden"
+                                ref={fileInputRef}
+                            />
+
+                            <button
+                                onClick={handleImportClick}
+                                className="w-full p-4 flex items-center justify-between border-b border-[var(--border)] hover:bg-[var(--input)] transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg flex items-center justify-center">
+                                        <CloudBackup size={18} />
+                                    </div>
+                                    <span className="font-semibold text-sm">Import Data (JSON)</span>
+                                </div>
+                                <ChevronRight size={16} className="text-neutral-300" />
+                            </button>
+                        </div>
+
 
                         <button
                             onClick={async () => {

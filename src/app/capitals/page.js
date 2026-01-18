@@ -63,7 +63,7 @@ export default function CapitalsPage() {
                     <div className="bg-[var(--input)] border border-dashed border-[var(--border)] rounded-3xl p-12 text-center text-[var(--muted)] transition-colors duration-300">
                         <WalletIcon size={48} className="mx-auto mb-4 opacity-20" />
                         <p>No capitals created yet.</p>
-                        <p className="text-xs mt-1">Tap the + button to add your first container like "Pocket" or "Min Bag".</p>
+                        <p className="text-xs mt-1">Tap the + button to add your first container like "Pocket" or "Money Bag".</p>
                     </div>
                 )}
             </div>
@@ -76,7 +76,7 @@ export default function CapitalsPage() {
                         </label>
                         <input
                             type="text"
-                            placeholder="e.g., Pocket, Main Bag, Bank"
+                            placeholder="e.g., Pocket, Money Bag, Bank"
                             className="w-full bg-[var(--input)] border-none rounded-2xl p-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-[var(--foreground)]"
                             value={newCapitalName}
                             onChange={(e) => setNewCapitalName(e.target.value)}

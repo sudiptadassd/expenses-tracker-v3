@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
 import { BookOpen, ChevronLeft } from 'lucide-react';
 import TransactionCard from '@/components/TransactionCard';
+import CapitalFilterDropdown from '@/components/CapitalFilterDropdown';
+import SortDropdown from '@/components/SortDropdown';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useRouter } from 'next/navigation';
 
@@ -12,12 +14,33 @@ export default function TransactionsPage() {
     const { transactions, capitals } = useExpenses();
     const [filterType, setFilterType] = useState('ALL');
     const [filterCapital, setFilterCapital] = useState('all');
+    const [sortBy, setSortBy] = useState('NEWEST');
+
+
+    // const filteredTransactions = transactions.filter(t => {
+    //     const matchesType = filterType === 'ALL' || t.type === filterType;
+    //     const matchesCapital = filterCapital === 'all' || t.capitalId === filterCapital;
+    //     return matchesType && matchesCapital;
+    // });
 
     const filteredTransactions = transactions.filter(t => {
         const matchesType = filterType === 'ALL' || t.type === filterType;
         const matchesCapital = filterCapital === 'all' || t.capitalId === filterCapital;
         return matchesType && matchesCapital;
+    }).sort((a, b) => {
+        switch (sortBy) {
+            case 'OLDEST':
+                return new Date(a.date) - new Date(b.date);
+            case 'AMOUNT_HIGH':
+                return b.amount - a.amount;
+            case 'AMOUNT_LOW':
+                return a.amount - b.amount;
+            default: // NEWEST
+                return new Date(b.date) - new Date(a.date);
+        }
     });
+
+
 
     return (
         <div className="space-y-6 page-transition pb-20">
@@ -54,29 +77,19 @@ export default function TransactionsPage() {
             </div>
 
             {/* Capital Filter Scroll */}
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                <button
-                    onClick={() => setFilterCapital('all')}
-                    className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filterCapital === 'all'
-                        ? 'bg-[var(--foreground)] text-[var(--background)] shadow-lg'
-                        : 'bg-[var(--input)] text-neutral-500'
-                        }`}
-                >
-                    All Sources
-                </button>
-                {capitals.map(cap => (
-                    <button
-                        key={cap.id}
-                        onClick={() => setFilterCapital(cap.id)}
-                        className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filterCapital === cap.id
-                            ? 'bg-[var(--foreground)] text-[var(--background)] shadow-lg'
-                            : 'bg-[var(--input)] text-neutral-500'
-                            }`}
-                    >
-                        {cap.name}
-                    </button>
-                ))}
+            {/* Filters & Sort Row */}
+            <div className="flex items-center justify-between pb-2">
+                <CapitalFilterDropdown
+                    capitals={capitals}
+                    selectedCapital={filterCapital}
+                    onSelect={setFilterCapital}
+                />
+                <SortDropdown
+                    currentSort={sortBy}
+                    onSortChange={setSortBy}
+                />
             </div>
+
 
             {/* Ledger Feed */}
             <div className="space-y-4">

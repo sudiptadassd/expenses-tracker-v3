@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
-import { Search, Filter, TrendingDown, Trash2, ChevronLeft } from 'lucide-react';
+import { Search, Filter, TrendingDown, Trash2, ChevronLeft, ChevronDown } from 'lucide-react';
 import ExpenseCard from '@/components/ExpenseCard';
+import CapitalFilterDropdown from '@/components/CapitalFilterDropdown';
+import SortDropdown from '@/components/SortDropdown';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useRouter } from 'next/navigation';
 
@@ -11,12 +13,24 @@ export default function ExpensesPage() {
     const router = useRouter();
     const { expenses, capitals, deleteExpense, settings } = useExpenses();
     const [filterCapital, setFilterCapital] = useState('all');
+    const [sortBy, setSortBy] = useState('NEWEST');
     const [searchQuery, setSearchQuery] = useState('');
 
     const filteredExpenses = expenses.filter(e => {
         const matchesCapital = filterCapital === 'all' || e.capitalId === filterCapital;
         const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesCapital && matchesSearch;
+    }).sort((a, b) => {
+        switch (sortBy) {
+            case 'OLDEST':
+                return new Date(a.date) - new Date(b.date);
+            case 'AMOUNT_HIGH':
+                return b.amount - a.amount;
+            case 'AMOUNT_LOW':
+                return a.amount - b.amount;
+            default: // NEWEST
+                return new Date(b.date) - new Date(a.date);
+        }
     });
 
     const totalFiltered = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -54,6 +68,10 @@ export default function ExpensesPage() {
                 </div>
             </div>
 
+
+
+
+
             {/* Filters */}
             <div className="space-y-3">
                 <div className="relative">
@@ -67,30 +85,20 @@ export default function ExpensesPage() {
                     />
                 </div>
 
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                    <button
-                        onClick={() => setFilterCapital('all')}
-                        className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filterCapital === 'all'
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                            : 'bg-[var(--input)] text-neutral-500 transition-colors duration-300'
-                            }`}
-                    >
-                        All Capitals
-                    </button>
-                    {capitals.map(cap => (
-                        <button
-                            key={cap.id}
-                            onClick={() => setFilterCapital(cap.id)}
-                            className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filterCapital === cap.id
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                : 'bg-[var(--input)] text-neutral-500 transition-colors duration-300'
-                                }`}
-                        >
-                            {cap.name}
-                        </button>
-                    ))}
+                <div className="flex items-center justify-between pb-2">
+                    <CapitalFilterDropdown
+                        capitals={capitals}
+                        selectedCapital={filterCapital}
+                        onSelect={setFilterCapital}
+                    />
+                    <SortDropdown
+                        currentSort={sortBy}
+                        onSortChange={setSortBy}
+                    />
                 </div>
             </div>
+
+
 
             {/* Expense List */}
             <div className="space-y-3">

@@ -15,7 +15,9 @@ import {
     List,
     User,
     Moon,
-    Sun
+    Sun,
+    BrushCleaning,
+    Info
 } from 'lucide-react';
 import Link from 'next/link';
 import CapitalCard from '@/components/CapitalCard';
@@ -75,7 +77,7 @@ export default function Dashboard() {
                 </button> */}
 
                 {/* Theme Toggle */}
-                <ThemeToggle/>
+                <ThemeToggle />
 
 
             </header>
@@ -150,22 +152,31 @@ export default function Dashboard() {
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-[var(--input)] border border-dashed border-[var(--border)] rounded-3xl p-8 text-center transition-colors duration-300">
-                        <p className="text-neutral-500 text-sm mb-4">No capitals yet</p>
-                        <button
-                            onClick={handleInitDummyData}
-                            className="text-blue-500 font-bold flex items-center gap-2 mx-auto"
-                        >
-                            <PlusCircle size={20} />
-                            Load Sample Data
-                        </button>
+                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--card)] to-[var(--input)] border border-[var(--border)] p-6 text-center group">
+                        <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div className="relative z-10 flex flex-col items-center gap-3">
+                            <div className="w-16 h-16 bg-[var(--background)] rounded-2xl flex items-center justify-center shadow-lg mb-2 group-hover:scale-110 transition-transform duration-300 ring-4 ring-[var(--card)]">
+                                <Wallet className="text-blue-500" size={32} />
+                            </div>
+                            <h3 className="font-bold text-lg">No capitals found</h3>
+                            <p className="text-[var(--muted)] text-xs max-w-[220px] leading-relaxed">
+                                Start your financial journey by adding your first source of funds.
+                            </p>
+                            <Link
+                                href="/capitals"
+                                className="mt-2 px-6 py-2.5 bg-[var(--input)] hover:bg-neutral-200 text-[var(--muted)] hover:text-neutral-900 bg-[var(--card)] rounded-full text-xs font-bold transition-all shadow-lg shadow-blue-500/10 flex items-center gap-2"
+                            >
+                                <PlusCircle size={16} />
+                                Create Capital
+                            </Link>
+                        </div>
                     </div>
                 )}
             </section>
 
             {/* Recent Transactions */}
-            <section className="pb-8">
-                <div className="flex justify-between items-center mb-4">
+            <section className="pb-8 mt-5">
+                <div className="flex justify-between items-center mb-4 mt-9">
                     <h3 className="font-bold text-lg">Recent Ledger</h3>
                     <Link href="/transactions" className="text-blue-500 text-sm font-semibold">View All</Link>
                 </div>

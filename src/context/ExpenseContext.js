@@ -1,9 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as generateId } from 'uuid';
 
 const ExpenseContext = createContext();
+
+/* ✅ Simple ID generator (Date-based) */
+const generateId = () => {
+    return `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+};
 
 export const useExpenses = () => {
     const context = useContext(ExpenseContext);
@@ -77,7 +82,7 @@ export const ExpenseProvider = ({ children }) => {
     // Actions
     const addCapital = (name, color = 'blue') => {
         const newCapital = {
-            id: uuidv4(),
+            id: generateId(),
             name,
             color,
             createdAt: new Date().toISOString(),
@@ -89,7 +94,7 @@ export const ExpenseProvider = ({ children }) => {
     const addSource = (capitalId, title, breakdown, amount) => {
         const beforeBalance = getCapitalBalance(capitalId);
         const newSource = {
-            id: uuidv4(),
+            id: generateId(),
             capitalId,
             title,
             breakdown,
@@ -98,7 +103,7 @@ export const ExpenseProvider = ({ children }) => {
         };
 
         const newTransaction = {
-            id: uuidv4(),
+            id: generateId(),
             type: 'CREDIT',
             capitalId,
             amount: Number(amount),
@@ -117,7 +122,7 @@ export const ExpenseProvider = ({ children }) => {
     const addExpense = (capitalId, title, reason, amount) => {
         const beforeBalance = getCapitalBalance(capitalId);
         const newExpense = {
-            id: uuidv4(),
+            id: generateId(),
             capitalId,
             title,
             reason,
@@ -128,7 +133,7 @@ export const ExpenseProvider = ({ children }) => {
         };
 
         const newTransaction = {
-            id: uuidv4(),
+            id: generateId(),
             type: 'DEBIT',
             capitalId,
             amount: Number(amount),
@@ -146,9 +151,9 @@ export const ExpenseProvider = ({ children }) => {
 
     const deleteCapital = (id) => {
         setCapitals(capitals.filter(c => c.id !== id));
-        setSources(sources.filter(s => s.capitalId !== id));
-        setExpenses(expenses.filter(e => e.capitalId !== id));
-        setTransactions(transactions.filter(t => t.capitalId !== id));
+        // setSources(sources.filter(s => s.capitalId !== id));
+        // setExpenses(expenses.filter(e => e.capitalId !== id));
+        // setTransactions(transactions.filter(t => t.capitalId !== id));
     };
 
     const deleteExpense = (id) => {
