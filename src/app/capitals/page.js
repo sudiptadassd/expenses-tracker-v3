@@ -2,17 +2,28 @@
 
 import React, { useState } from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
+import { useFeedback } from '@/context/FeedbackContext';
 import { Plus, X, Wallet as WalletIcon, ChevronLeft } from 'lucide-react';
 import CapitalCard from '@/components/CapitalCard';
 import Modal from '@/components/Modal';
+import ConfirmModal from '@/components/ConfirmModal';
 import { useRouter } from 'next/navigation';
 
 export default function CapitalsPage() {
     const router = useRouter();
-    const { capitals, addCapital } = useExpenses();
+    const { capitals, addCapital, updateCapital, deleteCapital } = useExpenses();
+    const { toast } = useFeedback();
+    
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newCapitalName, setNewCapitalName] = useState('');
     const [selectedColor, setSelectedColor] = useState('blue');
+
+    // Edit form states
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [selectedCapital, setSelectedCapital] = useState(null);
+    const [editName, setEditName] = useState('');
+    const [editColor, setEditColor] = useState('blue');
 
     const themes = [
         { id: 'blue', color: 'bg-blue-500' },
@@ -21,6 +32,12 @@ export default function CapitalsPage() {
         { id: 'amber', color: 'bg-amber-500' },
         { id: 'indigo', color: 'bg-indigo-500' },
         { id: 'violet', color: 'bg-violet-500' },
+        { id: 'purple', color: 'bg-purple-500' },
+        { id: 'pink', color: 'bg-pink-500' },
+        { id: 'cyan', color: 'bg-cyan-500' },
+        { id: 'teal', color: 'bg-teal-500' },
+        { id: 'lime', color: 'bg-lime-500' },
+        { id: 'orange', color: 'bg-orange-500' },
     ];
 
     const handleAddCapital = (e) => {
@@ -30,9 +47,42 @@ export default function CapitalsPage() {
         setNewCapitalName('');
         setSelectedColor('blue');
         setIsModalOpen(false);
+        toast('Capital created successfully!', 'success');
     };
 
-    console.log(capitals)
+    const handleEditClick = (capital, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedCapital(capital);
+        setEditName(capital.name);
+        setEditColor(capital.color);
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditCapital = (e) => {
+        e.preventDefault();
+        if (!editName.trim()) return;
+        updateCapital(selectedCapital.id, editName, editColor);
+        setIsEditModalOpen(false);
+        setSelectedCapital(null);
+        toast('Capital updated successfully!', 'success');
+    };
+
+    const handleDeleteClick = (capital, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedCapital(capital);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        deleteCapital(selectedCapital.id);
+        setIsDeleteModalOpen(false);
+        setSelectedCapital(null);
+        toast('Capital deleted successfully', 'success');
+    };
+
+    // console.log(capitals)
 
     return (
         <div className="space-y-6 page-transition">
@@ -59,7 +109,12 @@ export default function CapitalsPage() {
 
             <div className="space-y-4">
                 {capitals.map(capital => (
-                    <CapitalCard key={capital.id} capital={capital} />
+                    <CapitalCard 
+                        key={capital.id} 
+                        capital={capital}
+                        onEdit={handleEditClick}
+                        onDelete={handleDeleteClick}
+                    />
                 ))}
                 {capitals.length === 0 && (
                     <div className="bg-[var(--input)] border border-dashed border-[var(--border)] rounded-3xl p-12 text-center text-[var(--muted)] transition-colors duration-300">
@@ -103,18 +158,75 @@ export default function CapitalsPage() {
 
                     <button
                         type="submit"
-                        className={`w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 ${selectedColor === 'blue' ? 'bg-blue-600 shadow-blue-500/30' :
+                        className={`w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 ${
+                            selectedColor === 'blue' ? 'bg-blue-600 shadow-blue-500/30' :
                             selectedColor === 'emerald' ? 'bg-emerald-600 shadow-emerald-500/30' :
-                                selectedColor === 'rose' ? 'bg-rose-600 shadow-rose-500/30' :
-                                    selectedColor === 'amber' ? 'bg-amber-600 shadow-amber-500/30' :
-                                        selectedColor === 'indigo' ? 'bg-indigo-600 shadow-indigo-500/30' :
-                                            'bg-violet-600 shadow-violet-500/30'
-                            }`}
+                            selectedColor === 'rose' ? 'bg-rose-600 shadow-rose-500/30' :
+                            selectedColor === 'amber' ? 'bg-amber-600 shadow-amber-500/30' :
+                            selectedColor === 'indigo' ? 'bg-indigo-600 shadow-indigo-500/30' :
+                            selectedColor === 'violet' ? 'bg-violet-600 shadow-violet-500/30' :
+                            selectedColor === 'purple' ? 'bg-purple-600 shadow-purple-500/30' :
+                            selectedColor === 'pink' ? 'bg-pink-600 shadow-pink-500/30' :
+                            selectedColor === 'cyan' ? 'bg-cyan-600 shadow-cyan-500/30' :
+                            selectedColor === 'teal' ? 'bg-teal-600 shadow-teal-500/30' :
+                            selectedColor === 'lime' ? 'bg-lime-600 shadow-lime-500/30' :
+                            'bg-orange-600 shadow-orange-500/30'
+                        }`}
                     >
                         Create Capital
                     </button>
                 </form>
             </Modal>
+
+            {/* Edit Capital Modal */}
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Capital">
+                <form onSubmit={handleEditCapital} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-semibold mb-1.5">
+                            Capital Name
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="e.g., Pocket, Money Bag, Bank"
+                            className="w-full bg-[var(--input)] border-none rounded-2xl p-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-[var(--foreground)]"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            autoFocus
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-semibold mb-3">Theme Color</label>
+                        <div className="flex flex-wrap gap-4">
+                            {themes.map((theme) => (
+                                <button
+                                    key={theme.id}
+                                    type="button"
+                                    onClick={() => setEditColor(theme.id)}
+                                    className={`w-10 h-10 rounded-xl ${theme.color} transition-all duration-200 ${editColor === theme.id ? 'ring-4 ring-offset-2 ring-blue-400 scale-110 shadow-lg' : 'opacity-60 hover:opacity-100'}`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all active:scale-95"
+                    >
+                        Save Changes
+                    </button>
+                </form>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                title="Delete Capital?"
+                message={`Are you sure you want to delete "${selectedCapital?.name}"? All transaction history will be preserved.`}
+                onConfirm={confirmDelete}
+                onCancel={() => setIsDeleteModalOpen(false)}
+            />
         </div>
     );
 }

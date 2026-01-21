@@ -34,7 +34,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 export default function ProfilePage() {
     const router = useRouter();
-    const { settings, setSettings, resetApp, capitals, sources, expenses, transactions, loadDummyData, getTotalBalance, getCapitalBalance } = useExpenses();
+    const { settings, setSettings, resetApp, capitals, fund, sources, expenses, transactions, loadDummyData, getTotalBalance, getCapitalBalance, getInitialBalance } = useExpenses();
     const { toast, confirm } = useFeedback();
     const fileInputRef = useRef(null);
 
@@ -72,53 +72,333 @@ export default function ProfilePage() {
         if (!ok) return;
 
         const doc = new jsPDF();
-        let y = 15;
-
-        doc.setFontSize(16);
-        doc.text('Expense Tracker Report', 14, y);
-        y += 8;
-
+        const pageHeight = doc.internal.pageSize.height;
+        const pageWidth = doc.internal.pageSize.width;
+        
+        // Add title with branding
+        doc.setFontSize(22);
+        doc.setTextColor(30, 58, 138); // Blue-700 equivalent
+        doc.text('Expense Tracker Report', 14, 20);
+        
         doc.setFontSize(10);
-        doc.text(`Exported on: ${new Date().toLocaleString()}`, 14, y);
-        y += 10;
-
-        const addTable = (title, data) => {
-            if (!Array.isArray(data) || data.length === 0) return;
-
+        doc.setTextColor(107, 114, 128); // Gray-500
+        doc.text(`Exported on: ${new Date().toLocaleString()}`, 14, 30);
+        
+        let y = 40;
+        
+        // Add company/personal branding
+        doc.setDrawColor(229, 231, 235); // Gray-200
+        doc.line(14, 34, pageWidth - 14, 34); // Horizontal line
+        
+        // Add summary section
+        if (y + 20 > pageHeight) {
+            doc.addPage();
+            y = 20;
+        }
+        
+        doc.setFontSize(14);
+        doc.setTextColor(30, 58, 138);
+        doc.text('Financial Summary', 14, y);
+        y += 12;
+        
+        // Add total balance
+        doc.setFontSize(10);
+        doc.setTextColor(107, 114, 128);
+        doc.text(`Total Balance: ${settings.currency}${totalNetValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 14, y);
+        y += 15;
+        
+        // Add capitals section with detailed information
+        if (capitals.length > 0) {
+            if (y + 30 > pageHeight) {
+                doc.addPage();
+                y = 20;
+            }
+            
             doc.setFontSize(12);
-            doc.text(title, 14, y);
-            y += 4;
-
+            doc.setTextColor(30, 58, 138);
+            doc.text('Capitals (Detailed)', 14, y);
+            y += 8;
+            
             autoTable(doc, {
                 startY: y,
-                head: [Object.keys(data[0])],
-                body: data.map(row => Object.values(row)),
-                styles: { fontSize: 8 },
-                theme: 'grid'
+                head: [['Name', 'Color', 'Current Balance', 'Initial Balance', 'Created Date']],
+                body: capitals.map(capital => [
+                    capital.name,
+                    capital.color.charAt(0).toUpperCase() + capital.color.slice(1),
+                    `${settings.currency}${getCapitalBalance(capital.id).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    `${settings.currency}${getInitialBalance(capital.id).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    capital.createdAt ? new Date(capital.createdAt).toLocaleDateString() : 'N/A'
+                ]),
+                styles: { 
+                    fontSize: 9,
+                    cellPadding: 5,
+                    textColor: [55, 65, 81],
+                    fillColor: [255, 255, 255],
+                    lineWidth: 0.1,
+                    overflow: 'linebreak'
+                },
+                headStyles: {
+                    fillColor: [30, 58, 138], // Blue-700
+                    textColor: [255, 255, 255],
+                    fontSize: 10,
+                    fontStyle: 'bold',
+                    cellPadding: 6
+                },
+                alternateRowStyles: {
+                    fillColor: [249, 250, 251] // Gray-50
+                },
+                margin: { left: 14, right: 14, top: 10, bottom: 10 },
+                theme: 'grid',
+                pageBreak: 'auto'
             });
-
-            y = doc.lastAutoTable.finalY + 8;
-        };
-
-        addTable('Capitals', capitals);
-        addTable('Sources', sources);
-        addTable('Expenses', expenses);
-        addTable('Transactions', transactions);
-
-        // Settings table
+            
+            y = doc.lastAutoTable.finalY + 12;
+        }
+        
+        // Add sources section with detailed breakdown
+        if (sources.length > 0) {
+            if (y + 30 > pageHeight) {
+                doc.addPage();
+                y = 20;
+            }
+            
+            doc.setFontSize(12);
+            doc.setTextColor(30, 58, 138);
+            doc.text('Sources (Detailed)', 14, y);
+            y += 8;
+            
+            autoTable(doc, {
+                startY: y,
+                head: [['Title', 'Amount', 'Breakdown', 'Date']],
+                body: sources.map(source => [
+                    source.title,
+                    `${settings.currency}${source.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    source.breakdown || 'No breakdown',
+                    new Date(source.date).toLocaleDateString()
+                ]),
+                styles: { 
+                    fontSize: 8,
+                    cellPadding: 4,
+                    textColor: [55, 65, 81],
+                    fillColor: [255, 255, 255],
+                    lineWidth: 0.1,
+                    overflow: 'linebreak'
+                },
+                headStyles: {
+                    fillColor: [30, 58, 138], // Blue-700
+                    textColor: [255, 255, 255],
+                    fontSize: 9,
+                    fontStyle: 'bold',
+                    cellPadding: 5
+                },
+                alternateRowStyles: {
+                    fillColor: [249, 250, 251] // Gray-50
+                },
+                margin: { left: 10, right: 10, top: 8, bottom: 8 },
+                theme: 'grid',
+                pageBreak: 'auto'
+            });
+            
+            y = doc.lastAutoTable.finalY + 12;
+        }
+        
+        // Add fund section
+        if (fund.length > 0) {
+            if (y + 30 > pageHeight) {
+                doc.addPage();
+                y = 20;
+            }
+            
+            doc.setFontSize(12);
+            doc.setTextColor(30, 58, 138);
+            doc.text('Fund Records', 14, y);
+            y += 8;
+            
+            autoTable(doc, {
+                startY: y,
+                head: [['Name', 'Description', 'Status']],
+                body: fund.map(item => [
+                    item.name || 'N/A',
+                    item.description || 'No description',
+                    item.status || 'Active'
+                ]),
+                styles: { 
+                    fontSize: 9,
+                    cellPadding: 5,
+                    textColor: [55, 65, 81],
+                    fillColor: [255, 255, 255],
+                    lineWidth: 0.1,
+                    overflow: 'linebreak'
+                },
+                headStyles: {
+                    fillColor: [30, 58, 138], // Blue-700
+                    textColor: [255, 255, 255],
+                    fontSize: 10,
+                    fontStyle: 'bold',
+                    cellPadding: 6
+                },
+                alternateRowStyles: {
+                    fillColor: [249, 250, 251] // Gray-50
+                },
+                margin: { left: 14, right: 14, top: 10, bottom: 10 },
+                theme: 'grid',
+                pageBreak: 'auto'
+            });
+            
+            y = doc.lastAutoTable.finalY + 12;
+        }
+        
+        // Add expenses section with full details
+        if (expenses.length > 0) {
+            if (y + 30 > pageHeight) {
+                doc.addPage();
+                y = 20;
+            }
+            
+            doc.setFontSize(12);
+            doc.setTextColor(30, 58, 138);
+            doc.text('Expenses (Detailed)', 14, y);
+            y += 8;
+            
+            autoTable(doc, {
+                startY: y,
+                head: [['Title', 'Amount', 'Reason', 'Breakdown', 'Date', 'Before Balance', 'After Balance']],
+                body: expenses.map(expense => [
+                    expense.title,
+                    `${settings.currency}${expense.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    expense.reason || 'No reason provided',
+                    expense.breakdown || 'No breakdown',
+                    new Date(expense.date).toLocaleDateString(),
+                    `${settings.currency}${expense.beforeBalance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/A'}`,
+                    `${settings.currency}${expense.afterBalance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/A'}`
+                ]),
+                styles: { 
+                    fontSize: 7, // Smaller font for more columns
+                    cellPadding: 3,
+                    textColor: [55, 65, 81],
+                    fillColor: [255, 255, 255],
+                    lineWidth: 0.1,
+                    overflow: 'linebreak'
+                },
+                headStyles: {
+                    fillColor: [30, 58, 138], // Blue-700
+                    textColor: [255, 255, 255],
+                    fontSize: 8,
+                    fontStyle: 'bold',
+                    cellPadding: 4
+                },
+                alternateRowStyles: {
+                    fillColor: [249, 250, 251] // Gray-50
+                },
+                margin: { left: 8, right: 8, top: 6, bottom: 6 },
+                theme: 'grid',
+                pageBreak: 'auto'
+            });
+            
+            y = doc.lastAutoTable.finalY + 12;
+        }
+        
+        // Add transactions section with comprehensive details
+        if (transactions.length > 0) {
+            if (y + 30 > pageHeight) {
+                doc.addPage();
+                y = 20;
+            }
+            
+            doc.setFontSize(12);
+            doc.setTextColor(30, 58, 138);
+            doc.text('Transactions (Comprehensive)', 14, y);
+            y += 8;
+            
+            autoTable(doc, {
+                startY: y,
+                head: [['Type', 'Amount', 'Note', 'Breakdown', 'Balance Before', 'Balance After', 'Date', 'Capital']],
+                body: transactions.map(transaction => [
+                    transaction.type,
+                    `${settings.currency}${transaction.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    transaction.note || 'No note',
+                    transaction.breakdown || 'No breakdown',
+                    `${settings.currency}${transaction.balanceBefore.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    `${settings.currency}${transaction.balanceAfter.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    new Date(transaction.date).toLocaleDateString(),
+                    transaction.capitalName || 'Unknown Capital'
+                ]),
+                styles: { 
+                    fontSize: 6, // Very small font for many columns
+                    cellPadding: 2,
+                    textColor: [55, 65, 81],
+                    fillColor: [255, 255, 255],
+                    lineWidth: 0.1,
+                    overflow: 'linebreak'
+                },
+                headStyles: {
+                    fillColor: [30, 58, 138], // Blue-700
+                    textColor: [255, 255, 255],
+                    fontSize: 7,
+                    fontStyle: 'bold',
+                    cellPadding: 3
+                },
+                alternateRowStyles: {
+                    fillColor: [249, 250, 251] // Gray-50
+                },
+                margin: { left: 6, right: 6, top: 5, bottom: 5 },
+                theme: 'grid',
+                pageBreak: 'auto'
+            });
+            
+            y = doc.lastAutoTable.finalY + 12;
+        }
+        
+        // Add settings section
+        if (y + 30 > pageHeight) {
+            doc.addPage();
+            y = 20;
+        }
+        
         doc.setFontSize(12);
+        doc.setTextColor(30, 58, 138);
         doc.text('Settings', 14, y);
-        y += 4;
-
+        y += 8;
+        
         autoTable(doc, {
             startY: y,
             head: [['Key', 'Value']],
-            body: Object.entries(settings),
-            styles: { fontSize: 9 },
+            body: [
+                ['Currency', settings.currency],
+                ['Dark Mode', settings.darkMode ? 'Enabled' : 'Disabled']
+            ],
+            styles: { 
+                fontSize: 9,
+                cellPadding: 5,
+                textColor: [55, 65, 81],
+                fillColor: [255, 255, 255],
+                lineWidth: 0.1
+            },
+            headStyles: {
+                fillColor: [30, 58, 138], // Blue-700
+                textColor: [255, 255, 255],
+                fontSize: 10,
+                fontStyle: 'bold',
+                cellPadding: 6
+            },
+            alternateRowStyles: {
+                fillColor: [249, 250, 251] // Gray-50
+            },
+            margin: { left: 14, right: 14, top: 10, bottom: 10 },
             theme: 'grid'
         });
-
-        doc.save(`expense_tracker_${new Date().toISOString().split('T')[0]}.pdf`);
+        
+        // Add footer with page numbers
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(156, 163, 175); // Gray-400
+            doc.text(`Page ${i} of ${pageCount}`, pageWidth - 30, pageHeight - 10);
+            doc.text('Generated by ExTrack', 14, pageHeight - 10);
+        }
+        
+        doc.save(`expense_tracker_report_${new Date().toISOString().split('T')[0]}.pdf`);
 
         toast('PDF downloaded successfully!', 'success');
     };
