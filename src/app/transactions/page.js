@@ -78,7 +78,7 @@ export default function TransactionsPage() {
 
             {/* Capital Filter Scroll */}
             {/* Filters & Sort Row */}
-            <div className="flex items-center justify-between pb-2">
+            <div className="flex items-center justify-between pb-2 ">
                 <CapitalFilterDropdown
                     capitals={capitals}
                     selectedCapital={filterCapital}

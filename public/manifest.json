@@ -1,11 +1,12 @@
 {
-  "name": "Expense Tracker",
-  "short_name": "Expenses",
-  "description": "Offline Expense Tracker App",
+  "name": "ExTrack",
+  "short_name": "ExTrack",
+  "description": "Offline ExTrack App",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4f46e5",
+    "orientation": "portrait",
   "icons": [
     {
       "src": "/icon-192.png",

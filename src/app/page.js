@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useExpenses } from '@/context/ExpenseContext';
 import { useFeedback } from '@/context/FeedbackContext';
 import { generateDummyData } from '@/utils/dummyData';
@@ -17,17 +17,24 @@ import {
     Moon,
     Sun,
     BrushCleaning,
-    Info
+    Info,
+    Plus,
+    X,
+    Receipt
 } from 'lucide-react';
 import Link from 'next/link';
 import CapitalCard from '@/components/CapitalCard';
 import TransactionCard from '@/components/TransactionCard';
 import ThemeToggle from '@/components/ThemeToggle';
+import Modal from '@/components/Modal';
 
 export default function Dashboard() {
     const {
         capitals,
+        sources,
         getTotalBalance,
+        getCapitalBalance,
+        addExpense,
         expenses,
         transactions,
         loadDummyData,
@@ -36,6 +43,13 @@ export default function Dashboard() {
     } = useExpenses();
 
     const { toast } = useFeedback();
+
+    // Add Expense Modal State
+    const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
+    const [selectedCapitalId, setSelectedCapitalId] = useState('');
+    const [expenseAmount, setExpenseAmount] = useState('');
+    const [expenseReason, setExpenseReason] = useState('');
+    const [expenseBreakdown, setExpenseBreakdown] = useState('');
 
     const totalBalance = getTotalBalance();
     // const today = new Date().toISOString().split('T')[0];
@@ -60,12 +74,65 @@ export default function Dashboard() {
         toast('Sample notebook data loaded!', 'info');
     };
 
+    // Filter sources by selected capital
+    const selectedCapitalBalance = selectedCapitalId 
+        ? getCapitalBalance(selectedCapitalId)
+        : 0;
+
+    const calculatedAmount = Number(expenseAmount) || 0;
+    const afterBalance = selectedCapitalBalance - calculatedAmount;
+
+    const handleAddExpense = (e) => {
+        e.preventDefault();
+        
+        if (!selectedCapitalId) {
+            toast('Please select a capital', 'error');
+            return;
+        }
+
+        if (!expenseReason.trim()) {
+            toast('Please enter reason for expense', 'error');
+            return;
+        }
+
+        if (!expenseAmount || calculatedAmount <= 0) {
+            toast('Please enter a valid amount', 'error');
+            return;
+        }
+
+        try {
+            // Combine reason and breakdown
+            const fullBreakdown = expenseBreakdown.trim() 
+                ? `${expenseReason.trim()}, ${expenseBreakdown.trim()}`
+                : expenseReason.trim();
+
+            addExpense(
+                selectedCapitalId,
+                expenseReason.trim(), // Use reason as title
+                fullBreakdown,
+                calculatedAmount,
+                null
+            );
+
+            // Reset form
+            setSelectedCapitalId('');
+            setExpenseAmount('');
+            setExpenseReason('');
+            setExpenseBreakdown('');
+            setIsAddExpenseModalOpen(false);
+            
+            toast('Expense added successfully!', 'success');
+        } catch (error) {
+            toast(error.message, 'error');
+        }
+    };
+
     return (
         <div className="space-y-6 pb-4 page-transition">
             {/* Header */}
             <header className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-4xl font-bold">Morack</h1>
+                    <h1 className="text-4xl font-bold">ExTrack</h1>
                     <p className="text-[var(--muted)] text-lg">Welcome back!</p>
                 </div>
                 {/* <button
@@ -112,6 +179,17 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Add Expense CTA Button - Hidden on mobile, replaced by floating button */}
+            {capitals.length > 0 && (
+                <button
+                    onClick={() => setIsAddExpenseModalOpen(true)}
+                    className="hidden sm:flex w-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-rose-500/30 transition-all active:scale-95 items-center justify-center gap-2"
+                >
+                    <Receipt size={20} />
+                    Add Expense
+                </button>
+            )}
 
             {/* Quick Actions */}
             {/* <section>
@@ -189,6 +267,149 @@ export default function Dashboard() {
                     )}
                 </div>
             </section>
+
+            {/* Floating Add Expense Button - Bottom Right */}
+            {capitals.length > 0 && (
+                <button
+                    onClick={() => setIsAddExpenseModalOpen(true)}
+                    className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 w-14 h-14 bg-gradient-to-br from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white rounded-full shadow-2xl shadow-rose-500/40 flex items-center justify-center transition-all active:scale-90 hover:scale-110 z-50"
+                    title="Add Expense"
+                >
+                    <Plus size={28} strokeWidth={2.5} />
+                </button>
+            )}
+
+            {/* Add Expense Modal */}
+            <Modal 
+                isOpen={isAddExpenseModalOpen} 
+                onClose={() => setIsAddExpenseModalOpen(false)} 
+                title="Add New Expense"
+            >
+                <form onSubmit={handleAddExpense} className="space-y-4">
+                    {/* Capital Selection */}
+                    <div>
+                        <label className="block text-sm font-semibold mb-1.5">
+                            From Which Capital <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                            value={selectedCapitalId}
+                            onChange={(e) => setSelectedCapitalId(e.target.value)}
+                            className="w-full bg-[var(--input)] border-none rounded-2xl p-4 focus:ring-2 focus:ring-rose-500 outline-none transition-all text-[var(--foreground)]"
+                            required
+                        >
+                            <option value="">Select a capital</option>
+                            {capitals.map(capital => (
+                                <option key={capital.id} value={capital.id}>
+                                    {capital.name} ({settings.currency}{getCapitalBalance(capital.id).toLocaleString()})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Amount */}
+                    <div>
+                        <label className="block text-sm font-semibold mb-1.5">
+                            Amount <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)] font-semibold">
+                                {settings.currency}
+                            </span>
+                            <input
+                                type="number"
+                                placeholder="0"
+                                className="w-full bg-[var(--input)] border-none rounded-2xl p-4 pl-10 focus:ring-2 focus:ring-rose-500 outline-none transition-all text-[var(--foreground)]"
+                                value={expenseAmount}
+                                onChange={(e) => setExpenseAmount(e.target.value)}
+                                min="0"
+                                step="0.01"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    {/* Balance Display - Auto calculated and updates */}
+                    {selectedCapitalId && (
+                        <div className="bg-[var(--input)] rounded-2xl p-4 space-y-2">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-[var(--muted)]">Current Balance:</span>
+                                <span className="font-bold">{settings.currency}{selectedCapitalBalance.toLocaleString()}</span>
+                            </div>
+                            {calculatedAmount > 0 && (
+                                <>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-[var(--muted)]">Expense Amount:</span>
+                                        <span className="font-bold text-rose-600">-{settings.currency}{calculatedAmount.toLocaleString()}</span>
+                                    </div>
+                                    <div className="h-px bg-[var(--border)] my-2"></div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-[var(--muted)] font-semibold">After Expense:</span>
+                                        <span className={`font-bold text-base ${afterBalance < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                            {settings.currency}{afterBalance.toLocaleString()}
+                                        </span>
+                                    </div>
+                                </>
+                            )}
+                            {afterBalance < 0 && calculatedAmount > 0 && (
+                                <p className="text-rose-600 text-xs font-semibold mt-2 flex items-center gap-1">
+                                    <span>⚠</span>
+                                    <span>Insufficient balance!</span>
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Reason for Expense - MANDATORY */}
+                    <div>
+                        <label className="block text-sm font-semibold mb-1.5">
+                            Reason for Expense <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="e.g., Weekly shopping, Fuel, Electricity bill"
+                            className="w-full bg-[var(--input)] border-none rounded-2xl p-4 focus:ring-2 focus:ring-rose-500 outline-none transition-all text-[var(--foreground)]"
+                            value={expenseReason}
+                            onChange={(e) => setExpenseReason(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    {/* Breakdown/Details */}
+                    <div>
+                        <label className="block text-sm font-semibold mb-1.5">
+                            Additional Details
+                        </label>
+                        <textarea
+                            placeholder="Additional details or itemized breakdown..."
+                            className="w-full bg-[var(--input)] border-none rounded-2xl p-4 focus:ring-2 focus:ring-rose-500 outline-none transition-all text-[var(--foreground)] min-h-[80px] resize-none"
+                            value={expenseBreakdown}
+                            onChange={(e) => setExpenseBreakdown(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Current Date & Time Display */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-3 hidden">
+                        <p className="text-xs text-[var(--muted)] mb-1">Transaction Date & Time</p>
+                        <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                            {new Date().toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}
+                        </p>
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                        type="submit"
+                        className="w-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-rose-500/30 transition-all active:scale-95"
+                    >
+                        Add Expense
+                    </button>
+                </form>
+            </Modal>
         </div>
     );
 }
